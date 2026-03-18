@@ -10,7 +10,6 @@ terraform {
   # main.tf). The SP must have the "Storage Blob Data Contributor" role on
   # the state storage account. No access keys or SAS tokens are required.
   backend "azurerm" {
-    subscription_id      = "#{Terraform.Backend.SubscriptionId}"
     storage_account_name = "#{Terraform.Backend.StorageAccountName}"
     container_name       = "#{Terraform.Backend.ContainerName}"
     key                  = "#{Terraform.Backend.StateKey}"
