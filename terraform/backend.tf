@@ -13,6 +13,7 @@ terraform {
     storage_account_name = "#{Terraform.Backend.StorageAccountName}"
     container_name       = "#{Terraform.Backend.ContainerName}"
     key                  = "#{Terraform.Backend.StateKey}"
+    use_oidc             = true
     use_azuread_auth     = true
   }
 }
