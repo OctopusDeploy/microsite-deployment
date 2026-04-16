@@ -1,4 +1,4 @@
-$githubToken = $OctopusParameters["Github.Token"]
+$githubToken = $OctopusParameters["GitHub.Token"]
 $pullRequestNumber = $OctopusParameters["Octopus.Release.CustomFields[PullRequestNumber]"]
 $environmentName = $OctopusParameters["Octopus.Environment.Name"]
 $ephemeralUrl = $OctopusParameters["Octopus.Action[Get Static Site URL].Output.StaticWebsiteUrl"]
