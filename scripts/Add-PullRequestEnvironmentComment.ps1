@@ -17,4 +17,5 @@ This environment will be automatically deprovisioned when the pull request is cl
 "@
 
 Write-Host "Adding comment to pull request #$pullRequestNumber"
-gh pr comment $pullRequestNumber --repo $repository --edit-last --create-if-none --body $commentBody
+# gh pr comment $pullRequestNumber --repo $repository --edit-last --create-if-none --body $commentBody
+gh pr comment $pullRequestNumber --repo $repository --body $commentBody
