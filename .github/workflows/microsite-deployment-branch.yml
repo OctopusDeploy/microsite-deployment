@@ -9,6 +9,10 @@ on:
       package_id:
         required: true
         type: string
+      node_version:
+        required: false
+        type: string
+        default: '18'
 
 permissions:
   contents: read
@@ -43,7 +47,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ inputs.node_version }}
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
 
