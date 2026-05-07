@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  branch_tests:
+  build_and_deploy:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
