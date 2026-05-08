@@ -36,16 +36,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10.13.1
           run_install: false
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ inputs.node_version }}
           cache: 'pnpm'
@@ -56,7 +56,7 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v5
         name: Setup pnpm cache
         with:
           path: ${{ env.STORE_PATH }}
@@ -93,7 +93,7 @@ jobs:
 
       - name: Create a Zip package 🐙
         id: package
-        uses: OctopusDeploy/create-zip-package-action@v3
+        uses: OctopusDeploy/create-zip-package-action@v4
         with:
           package_id: ${{ inputs.package_id }}
           version: "${{ env.PACKAGE_VERSION }}"
@@ -103,27 +103,27 @@ jobs:
             **/*.*
 
       - name: Login to Octopus Deploy 🐙
-        uses: OctopusDeploy/login@v1.0.3
+        uses: OctopusDeploy/login@v2
         if: ${{ env.SHOULD_DEPLOY }}
         with:
           server: ${{ secrets.OCTOPUS_SERVER_URL }}
           service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
 
       - name: Push a package to Octopus Deploy 🐙
-        uses: OctopusDeploy/push-package-action@v4.0.0
+        uses: OctopusDeploy/push-package-action@v4
         if: ${{ env.SHOULD_DEPLOY }}
         with:
           packages: ${{ steps.package.outputs.package_file_path }}
 
       - name: Let people download package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ ! env.SHOULD_DEPLOY }}
         with:
           name: ${{ inputs.package_id }}
           path: ${{ steps.package.outputs.package_file_path }}
 
       - name: Push build information to Octopus Deploy 🐙
-        uses: OctopusDeploy/push-build-information-action@v4.1.0
+        uses: OctopusDeploy/push-build-information-action@v4
         if: ${{ env.SHOULD_DEPLOY }}
         with:
           version: "${{ env.PACKAGE_VERSION }}"
@@ -131,7 +131,7 @@ jobs:
 
       - name: Create a release in Octopus Deploy 🐙
         id: create_release
-        uses: OctopusDeploy/create-release-action@v4.1.1
+        uses: OctopusDeploy/create-release-action@v4
         if: ${{ env.SHOULD_DEPLOY }}
         with:
           project: ${{ env.OCTOPUS_PROJECT_NAME }}
