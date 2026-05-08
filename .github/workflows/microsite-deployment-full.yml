@@ -110,7 +110,7 @@ jobs:
           service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
 
       - name: Push a package to Octopus Deploy 🐙
-        uses: OctopusDeploy/push-package-action@v4.0.0
+        uses: OctopusDeploy/push-package-action@v4.0.1
         if: ${{ env.SHOULD_DEPLOY }}
         with:
           packages: ${{ steps.package.outputs.package_file_path }}
