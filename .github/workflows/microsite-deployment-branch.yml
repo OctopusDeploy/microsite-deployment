@@ -12,7 +12,7 @@ on:
       node_version:
         required: false
         type: string
-        default: '18'
+        default: '22'
 
 permissions:
   contents: read
