@@ -12,7 +12,7 @@ on:
       node_version:
         required: false
         type: string
-        default: '22'
+        default: "22"
 
 permissions:
   contents: read
@@ -35,21 +35,25 @@ jobs:
       OCTOPUS_PROJECT_NAME: ${{ inputs.octopus_project_name }}
 
     steps:
+      - name: Retrieve versions
+        uses: OctopusDeploy/microsite-deployment/.github/composite/versions@poc-standardise-versions
+        id: versions
+
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 10.13.1
+          version: ${{ steps.versions.outputs.pnpm-version }}
           run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node_version }}
-          cache: 'pnpm'
-          cache-dependency-path: 'pnpm-lock.yaml'
+          node-version: ${{ steps.versions.outputs.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
 
       - name: Get pnpm store directory
         shell: bash
@@ -157,7 +161,7 @@ jobs:
         with:
           project: ${{ env.OCTOPUS_PROJECT_NAME }}
           release_number: ${{ steps.create_release.outputs.release_number }}
-          environments: 'pr${{ github.event.pull_request.number }}'
+          environments: "pr${{ github.event.pull_request.number }}"
 
       - name: Await deployment completion 🐙
         if: ${{ env.SHOULD_DEPLOY }}
