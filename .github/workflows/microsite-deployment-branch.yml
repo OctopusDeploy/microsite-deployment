@@ -9,10 +9,6 @@ on:
       package_id:
         required: true
         type: string
-      node_version:
-        required: false
-        type: string
-        default: "22"
 
 permissions:
   contents: read
