@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Retrieve versions
-        uses: OctopusDeploy/microsite-deployment/.github/composite/versions@poc-standardise-versions
+        uses: OctopusDeploy/microsite-deployment/.github/composite/versions@main
         id: versions
 
       - name: Checkout
