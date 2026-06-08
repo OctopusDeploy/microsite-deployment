@@ -1,0 +1,17 @@
+name: Standard Versions
+description: Defines standard Node and PNPM versions used by workflows in this repository.
+
+outputs:
+  node-version:
+    value: ${{ steps.set-versions.outputs.node-version }}
+  pnpm-version:
+    value: ${{ steps.set-versions.outputs.pnpm-version }}
+
+runs:
+  using: composite
+  steps:
+    - id: set-versions
+      shell: bash
+      run: |
+        echo "node-version=24" >> $GITHUB_OUTPUT
+        echo "pnpm-version=10.13.1" >> $GITHUB_OUTPUT
