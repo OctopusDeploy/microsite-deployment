@@ -108,6 +108,9 @@ jobs:
           name: ${{ inputs.package_id }}
           path: ${{ steps.package.outputs.package_file_path }}
 
+      - name: Simulate build failure (TEMPORARY - revert before merge)
+        run: exit 1
+
   deploy-ephemeral:
     runs-on: ubuntu-latest
     needs: build
