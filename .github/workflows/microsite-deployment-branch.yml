@@ -134,11 +134,14 @@ jobs:
           server: ${{ secrets.OCTOPUS_SERVER_URL }}
           service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
 
+      # Run number is unchanged on re-run, so both pushes below must be allowed to
+      # replace the existing PR version rather than fail on it
       - name: Push a package to Octopus Deploy 🐙
         uses: OctopusDeploy/push-package-action@v4
         if: ${{ env.SHOULD_DEPLOY }}
         with:
           packages: artifacts/${{ needs.build.outputs.package_filename }}
+          overwrite_mode: OverwriteExisting
 
       - name: Push build information to Octopus Deploy 🐙
         uses: OctopusDeploy/push-build-information-action@v4
@@ -146,6 +149,7 @@ jobs:
         with:
           version: "${{ env.PACKAGE_VERSION }}-pullrequest"
           packages: artifacts/${{ needs.build.outputs.package_filename }}
+          overwrite_mode: OverwriteExisting
 
       - name: Create Ephemeral Environment
         id: create_ephemeral_environment
