@@ -73,7 +73,7 @@ jobs:
       - name: Set Version
         id: set_version
         run: |
-          VERSION="$(date +'%Y.%m.%d').$GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT"
+          VERSION="$(date +'%Y%m%d').$GITHUB_RUN_NUMBER"
           echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_ENV
           echo "package_version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -96,7 +96,7 @@ jobs:
         uses: OctopusDeploy/create-zip-package-action@v4
         with:
           package_id: ${{ inputs.package_id }}
-          version: "${{ env.PACKAGE_VERSION }}-pullrequest"
+          version: "${{ env.PACKAGE_VERSION }}-pullrequest.${{ github.run_attempt }}"
           base_path: "./dist"
           output_folder: "./artifacts"
           files: |
@@ -144,7 +144,7 @@ jobs:
         uses: OctopusDeploy/push-build-information-action@v4
         if: ${{ env.SHOULD_DEPLOY }}
         with:
-          version: "${{ env.PACKAGE_VERSION }}-pullrequest"
+          version: "${{ env.PACKAGE_VERSION }}-pullrequest.${{ github.run_attempt }}"
           packages: artifacts/${{ needs.build.outputs.package_filename }}
 
       - name: Create Ephemeral Environment
@@ -164,7 +164,7 @@ jobs:
           channel: "Ephemeral Environments"
           git_ref: ${{ github.head_ref || github.ref_name }}
           git_commit: ${{ github.event.after || github.event.pull_request.head.sha }}
-          package_version: "${{ env.PACKAGE_VERSION }}-pullrequest"
+          package_version: "${{ env.PACKAGE_VERSION }}-pullrequest.${{ github.run_attempt }}"
           custom_fields: |
             PullRequestNumber: ${{ github.event.pull_request.number }}
 
