@@ -91,16 +91,15 @@ jobs:
           echo; echo "listing"
           ls
 
-      - name: Create a Zip package 🐙
+      - name: Create a Zip package
         id: package
-        uses: OctopusDeploy/create-zip-package-action@v4
-        with:
-          package_id: ${{ inputs.package_id }}
-          version: "${{ env.PACKAGE_VERSION }}-pullrequest.${{ github.run_attempt }}"
-          base_path: "./dist"
-          output_folder: "./artifacts"
-          files: |
-            **/*.*
+        run: |
+          VERSION="${{ env.PACKAGE_VERSION }}-pullrequest.${{ github.run_attempt }}"
+          NAME="${{ inputs.package_id }}.$VERSION.zip"
+          mkdir -p artifacts
+          (cd dist && zip -r -q "$GITHUB_WORKSPACE/artifacts/$NAME" .)
+          echo "package_filename=$NAME" >> $GITHUB_OUTPUT
+          echo "package_file_path=artifacts/$NAME" >> $GITHUB_OUTPUT
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v7
