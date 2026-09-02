@@ -1,7 +1,7 @@
 $githubToken = $OctopusParameters["GitHub.Token"]
 $pullRequestNumber = $OctopusParameters["Octopus.Release.CustomFields[PullRequestNumber]"]
 $environmentName = $OctopusParameters["Octopus.Environment.Name"]
-$ephemeralUrl = $OctopusParameters["Octopus.Action[Get Static Site URL].Output.StaticWebsiteUrl"]
+$ephemeralUrl = $OctopusParameters["Octopus.Environment.State[Static Site]"]
 $repository = $OctopusParameters["GitHub.Repository"]
 $projectPrefix = $OctopusParameters["micrositeprefix"]
 
