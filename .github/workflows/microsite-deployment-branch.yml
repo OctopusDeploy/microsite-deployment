@@ -133,11 +133,14 @@ jobs:
           server: ${{ secrets.OCTOPUS_SERVER_URL }}
           service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
 
-      - name: Push a package to Octopus Deploy 🐙
-        uses: OctopusDeploy/push-package-action@v4
+      - name: Install Octopus CLI 🐙
+        uses: OctopusDeploy/install-octopus-cli-action@v4
         if: ${{ env.SHOULD_DEPLOY }}
-        with:
-          packages: artifacts/${{ needs.build.outputs.package_filename }}
+
+      - name: Push a package to Octopus Deploy 🐙
+        if: ${{ env.SHOULD_DEPLOY }}
+        run: |
+          octopus package upload --package "artifacts/${{ needs.build.outputs.package_filename }}" --space "$OCTOPUS_SPACE" --no-prompt
 
       - name: Push build information to Octopus Deploy 🐙
         uses: OctopusDeploy/push-build-information-action@v4
