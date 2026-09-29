@@ -25,6 +25,18 @@ resource "azurerm_storage_account" "static_site" {
   location                 = var.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+
+  # Restrict Azure Files SMB access to the "Maximum security" profile
+  # (SMB 3.1.1, Kerberos only, AES-256). Microsites don't use file shares,
+  # but legacy SMB protocols must be disabled on every account.
+  share_properties {
+    smb {
+      versions                        = ["SMB3.1.1"]
+      authentication_types            = ["Kerberos"]
+      kerberos_ticket_encryption_type = ["AES-256"]
+      channel_encryption_type         = ["AES-256-GCM"]
+    }
+  }
 }
 
 # Enables the $web blob container and configures the default document and the
