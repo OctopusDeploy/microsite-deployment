@@ -17,7 +17,7 @@ This repository provides three things:
 
 ## Repository structure
 
-```
+```text
 .github/
   composite/versions/         # Pinned Node + pnpm versions shared by the workflows
   workflows/                  # Reusable build/deploy workflows called by microsite repos
@@ -47,7 +47,7 @@ jobs:
 Both workflows take the same inputs:
 
 | Input | Purpose |
-|---|---|
+| --- | --- |
 | `octopus_project_name` | The Octopus project to release/deploy |
 | `package_id` | The package ID used for the built site artifact |
 
@@ -143,14 +143,16 @@ are substituted by Octopus at deploy time.
 
 ### Resources provisioned
 
-- **`azurerm_storage_account`** — Standard LRS storage account.
+- **`azurerm_storage_account`** — Standard LRS storage account. Azure Files SMB
+  settings are locked to the "Maximum security" profile (SMB 3.1.1, Kerberos
+  only, AES-256 ticket encryption, AES-256-GCM channel encryption).
 - **`azurerm_storage_account_static_website`** — Enables the `$web` container,
   serving `index.html` as the default document and `404.html` for missing paths.
 
 ### Outputs
 
 | Output | Description |
-|---|---|
+| --- | --- |
 | `static_website_url` | Primary endpoint URL for the static website |
 
 ---
@@ -161,7 +163,7 @@ The PowerShell scripts in `scripts/` are run as Octopus **Run a Script** steps
 at various points in the deployment process:
 
 | Script | Purpose |
-|---|---|
+| --- | --- |
 | `Deploy-Microsite.ps1` | Syncs the built site package to the storage account's `$web` container using AzCopy with Azure CLI authentication. |
 | `Get-StaticSiteUrl.ps1` | Queries Azure for the static website endpoint and exposes it as an Octopus output variable. |
 | `Add-PullRequestEnvironmentComment.ps1` | Posts a comment on the pull request with the ephemeral environment URL (used by the PR workflow). |
