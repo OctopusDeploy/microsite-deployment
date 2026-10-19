@@ -9,12 +9,16 @@ on:
         type: string
         default: ".markdownlint.json"
       extra_lint_command:
-        description: Optional extra command to run against changed markdown files (files are passed as arguments)
+        description: >-
+          Optional repo-specific check run against changed markdown files, which are passed as arguments.
+          For example, blog-new's image syntax check: node scripts/lint-image-syntax.mjs
         required: false
         type: string
         default: ""
       extra_lint_path_filter:
-        description: Optional regex to narrow which changed markdown files are passed to extra_lint_command
+        description: >-
+          Optional regex limiting which changed markdown files are passed to extra_lint_command.
+          For example, blog-new limits its image syntax check to posts with ^src/content/blog/
         required: false
         type: string
         default: ""
@@ -85,7 +89,9 @@ jobs:
           config: ${{ inputs.config }}
           globs: ${{ steps.changed-files.outputs.files }}
 
-      # Dependencies are only needed for the extra lint command; markdownlint itself is self-contained
+      # Optional repo-specific check, e.g. blog-new's image syntax check (scripts/lint-image-syntax.mjs).
+      # The command and path filter are supplied by the caller so repo layout details stay in that repo.
+      # Dependencies are only needed for this check; markdownlint itself is self-contained.
       - name: Install pnpm
         if: inputs.extra_lint_command != '' && steps.changed-files.outputs.extra_count > 0
         uses: pnpm/action-setup@v6
