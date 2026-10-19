@@ -156,7 +156,19 @@ the `.md` and `.mdx` files changed in the PR.
 | --- | --- | --- |
 | `config` | `.markdownlint.json` | markdownlint config file in the calling repository |
 | `extra_lint_command` | _(none)_ | Optional repo-specific command; changed files are passed as arguments |
-| `extra_lint_path_filter` | _(none)_ | Optional regex limiting which files go to `extra_lint_command` |
+| `extra_lint_path_filter` | _(none)_ | Optional regex (not a glob) limiting which files go to `extra_lint_command` |
+
+`extra_lint_path_filter` is a single extended regex (`grep -E`) matched against
+each changed file's repo-relative path, such as `src/content/blog/post.md`:
+
+- Anchor with `^` to match from the start of the path. Without it, the pattern
+  can match anywhere, so `blog/` also matches `docs/blog/`.
+- Use `|` to match several paths, for example
+  `^(src/content/blog/|src/pages/)`.
+- Globs such as `src/**/*.md` don't work as expected, because `*` means
+  "repeat" in a regex. A folder prefix is usually enough, since only `.md` and
+  `.mdx` files are passed in.
+- Leave it empty to pass every changed markdown file.
 
 Dependencies are only installed when `extra_lint_command` is set and there are
 matching files to check. For example, the blog runs an extra image syntax check

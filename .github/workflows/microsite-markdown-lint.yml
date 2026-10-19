@@ -17,8 +17,10 @@ on:
         default: ""
       extra_lint_path_filter:
         description: >-
-          Optional regex limiting which changed markdown files are passed to extra_lint_command.
-          For example, blog-new limits its image syntax check to posts with ^src/content/blog/
+          Optional extended regex (grep -E, not a glob) matched against each changed markdown file's
+          repo-relative path. Only matching files are passed to extra_lint_command. Use | to match
+          several paths, e.g. ^(src/content/blog/|src/pages/). Leave empty to pass all changed
+          markdown files. blog-new uses ^src/content/blog/
         required: false
         type: string
         default: ""
