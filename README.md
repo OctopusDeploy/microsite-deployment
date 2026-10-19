@@ -20,7 +20,7 @@ This repository provides three things:
 ```text
 .github/
   composite/versions/         # Pinned Node + pnpm versions shared by the workflows
-  workflows/                  # Reusable build/deploy workflows called by microsite repos
+  workflows/                  # Reusable build, deploy and PR check workflows called by microsite repos
 terraform/                    # Azure static-website infrastructure (Terraform)
 scripts/                      # PowerShell scripts run by the Octopus deployment process
 ```
@@ -44,7 +44,7 @@ jobs:
     secrets: inherit
 ```
 
-Both workflows take the same inputs:
+Both deployment workflows take the same inputs:
 
 | Input | Purpose |
 | --- | --- |
@@ -59,7 +59,7 @@ being pushed to Octopus.
 
 ### Shared version pinning
 
-Both workflows resolve their Node and pnpm versions from the composite action
+All workflows resolve their Node and pnpm versions from the composite action
 in `.github/composite/versions`, rather than hard-coding them per workflow:
 
 ```yaml
@@ -130,6 +130,71 @@ flowchart TD
 > **Branch protection:** the required status check for this workflow is
 > `pr-ready`. If you adopt or rename these jobs, update the required check in
 > the consuming repository's branch protection rules to match.
+
+### Pull request checks
+
+The two check workflows below only inspect files changed by the pull request.
+They work out which files changed by diffing against the point where the PR
+branch diverged from its base branch (`git diff origin/<base>...HEAD`), so
+changes merged to the base branch after the PR was opened are not included.
+Both must be called from a `pull_request` triggered workflow.
+
+Rules and dictionaries stay in each microsite repository: the lint uses that
+repository's `.markdownlint.json`, and the spellcheck uses its `cspell.json`
+and the `cspell` version from its `package.json`.
+
+> **Branch protection:** checks from a reusable workflow are reported as
+> `<caller job> / <called job>`. For example, a caller job named `spellcheck`
+> produces the check `spellcheck / spellcheck`.
+
+#### Markdown lint — `microsite-markdown-lint.yml`
+
+Runs [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) over
+the `.md` and `.mdx` files changed in the PR.
+
+| Input | Default | Purpose |
+| --- | --- | --- |
+| `config` | `.markdownlint.json` | markdownlint config file in the calling repository |
+| `extra_lint_command` | _(none)_ | Optional repo-specific command; changed files are passed as arguments |
+| `extra_lint_path_filter` | _(none)_ | Optional regex limiting which files go to `extra_lint_command` |
+
+Dependencies are only installed when `extra_lint_command` is set and there are
+matching files to check. For example, the blog runs an extra image syntax check
+over changed blog posts only:
+
+```yaml
+name: Markdown
+
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    uses: OctopusDeploy/microsite-deployment/.github/workflows/microsite-markdown-lint.yml@main
+    with:
+      extra_lint_command: node scripts/lint-image-syntax.mjs
+      extra_lint_path_filter: ^src/content/blog/
+```
+
+#### Spellcheck — `microsite-spellcheck.yml`
+
+Runs [cspell](https://cspell.org/) over the files changed in the PR, using the
+calling repository's `cspell` dependency and config. It takes no inputs:
+
+```yaml
+name: Spellcheck
+
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  spellcheck:
+    uses: OctopusDeploy/microsite-deployment/.github/workflows/microsite-spellcheck.yml@main
+```
 
 ---
 
