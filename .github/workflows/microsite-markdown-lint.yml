@@ -1,0 +1,125 @@
+name: Microsite Markdown Lint
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: Path to the markdownlint config file in the calling repository
+        required: false
+        type: string
+        default: ".markdownlint.json"
+      extra_lint_command:
+        description: >-
+          Optional repo-specific check run against changed markdown files, which are passed as arguments.
+          For example, blog-new's image syntax check: node scripts/lint-image-syntax.mjs
+        required: false
+        type: string
+        default: ""
+      extra_lint_path_filter:
+        description: >-
+          Optional extended regex (grep -E, not a glob) matched against each changed markdown file's
+          repo-relative path. Only matching files are passed to extra_lint_command. Use | to match
+          several paths, e.g. ^(src/content/blog/|src/pages/). Leave empty to pass all changed
+          markdown files. blog-new uses ^src/content/blog/
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-markdown
+      cancel-in-progress: true
+
+    steps:
+      - name: Retrieve versions
+        uses: OctopusDeploy/microsite-deployment/.github/composite/versions@main
+        id: versions
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Full history so we can diff against the PR base branch
+
+      - name: Get changed markdown files
+        id: changed-files
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          EXTRA_LINT_PATH_FILTER: ${{ inputs.extra_lint_path_filter }}
+        run: |
+          if [ -z "$BASE_REF" ]; then
+            echo "::error::This workflow must be triggered by a pull_request event"
+            exit 1
+          fi
+
+          git fetch origin "$BASE_REF"
+
+          # Changed .md and .mdx files since this branch diverged from the base branch
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT "origin/$BASE_REF...HEAD" | grep -E '\.(md|mdx)$' || true)
+
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "count=0" >> $GITHUB_OUTPUT
+          else
+            echo "count=$(echo "$CHANGED_FILES" | wc -l)" >> $GITHUB_OUTPUT
+          fi
+
+          # Subset of changed files passed to the optional extra lint command
+          EXTRA_FILES=$(echo "$CHANGED_FILES" | grep -E "${EXTRA_LINT_PATH_FILTER:-.}" || true)
+
+          echo "extra_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$EXTRA_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -z "$EXTRA_FILES" ]; then
+            echo "extra_count=0" >> $GITHUB_OUTPUT
+          else
+            echo "extra_count=$(echo "$EXTRA_FILES" | wc -l)" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: DavidAnson/markdownlint-cli2-action@v24
+        if: steps.changed-files.outputs.count > 0
+        with:
+          config: ${{ inputs.config }}
+          globs: ${{ steps.changed-files.outputs.files }}
+
+      # Optional repo-specific check, e.g. blog-new's image syntax check (scripts/lint-image-syntax.mjs).
+      # The command and path filter are supplied by the caller so repo layout details stay in that repo.
+      # Dependencies are only needed for this check; markdownlint itself is self-contained.
+      - name: Install pnpm
+        if: inputs.extra_lint_command != '' && steps.changed-files.outputs.extra_count > 0
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ steps.versions.outputs.pnpm-version }}
+          run_install: false
+
+      - name: Setup Node
+        if: inputs.extra_lint_command != '' && steps.changed-files.outputs.extra_count > 0
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.versions.outputs.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
+
+      - name: PNPM install
+        if: inputs.extra_lint_command != '' && steps.changed-files.outputs.extra_count > 0
+        run: pnpm install
+
+      - name: Run extra lint command
+        if: inputs.extra_lint_command != '' && steps.changed-files.outputs.extra_count > 0
+        env:
+          EXTRA_LINT_COMMAND: ${{ inputs.extra_lint_command }}
+          EXTRA_FILES: ${{ steps.changed-files.outputs.extra_files }}
+        run: |
+          # EXTRA_LINT_COMMAND is intentionally unquoted so it can include arguments
+          printf '%s\n' "$EXTRA_FILES" \
+            | grep -v '^[[:space:]]*$' \
+            | xargs -r -d '\n' $EXTRA_LINT_COMMAND

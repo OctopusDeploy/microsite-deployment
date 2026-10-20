@@ -1,0 +1,78 @@
+name: Microsite Spellcheck
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-spellcheck
+      cancel-in-progress: true
+
+    steps:
+      - name: Retrieve versions
+        uses: OctopusDeploy/microsite-deployment/.github/composite/versions@main
+        id: versions
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Full history so we can diff against the PR base branch
+
+      - name: Get changed files
+        id: changed-files
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE_REF" ]; then
+            echo "::error::This workflow must be triggered by a pull_request event"
+            exit 1
+          fi
+
+          git fetch origin "$BASE_REF"
+
+          # All files changed since this branch diverged from the base branch.
+          # The calling repository's cspell config decides which of these are checked.
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT "origin/$BASE_REF...HEAD")
+
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "count=0" >> $GITHUB_OUTPUT
+          else
+            echo "count=$(echo "$CHANGED_FILES" | wc -l)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install pnpm
+        if: steps.changed-files.outputs.count > 0
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ steps.versions.outputs.pnpm-version }}
+          run_install: false
+
+      - name: Setup Node
+        if: steps.changed-files.outputs.count > 0
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.versions.outputs.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
+
+      - name: PNPM install
+        if: steps.changed-files.outputs.count > 0
+        run: pnpm install
+
+      # Uses the cspell version and config from the calling repository
+      - name: Check spellings
+        if: steps.changed-files.outputs.count > 0
+        env:
+          FILES: ${{ steps.changed-files.outputs.files }}
+        run: |
+          printf '%s\n' "$FILES" | pnpm exec cspell --no-must-find-files --file-list stdin
