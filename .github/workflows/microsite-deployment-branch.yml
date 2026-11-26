@@ -185,7 +185,7 @@ jobs:
         with:
           server_task_id: ${{ fromJson(steps.deploy_release.outputs.server_tasks)[0].serverTaskId }}
           polling_interval: 10
-          timeout_after: 900
+          timeout_after: 1800
 
   pr-ready:
     runs-on: ubuntu-latest
